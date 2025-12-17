@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <!DOCTYPE html>
+    <html lang="fa" dir="rtl">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>داشبورد نُوا پیشرفته</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        />
+        <style>
+          :root {
+            --bg: #fce4ec;
+            --text: #333;
+            --card: rgba(255, 255, 255, 0.7);
+            --btn: #f06292;
+            --accent: #ec407a;
+          }
+          body {
+            margin: 0;
+            font-family: Tahoma;
+            background: var(--bg);
+            color: var(--text);
+            transition: 0.3s;
+          }
+          .page {
+            display: none;
+            padding: 20px;
+            animation: fadeIn 0.5s;
+          }
+          .active {
+            display: block;
+          }
+          @keyframes fadeIn {
+            from {
+              opacity: 0;
+            }
+            to {
+              opacity: 1;
+            }
+          }
+          nav {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 10px;
+            background: #f8bbd0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 2px solid var(--accent);
+          }
+          nav button,
+          select {
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 16px;
+            transition: 0.2s;
+          }
+          nav button:hover {
+            background: rgba(236, 64, 122, 0.3);
+          }
+          .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+          }
+          .card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            text-align: center;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+          }
+          .btn {
+            padding: 10px;
+            background: var(--btn);
+            color: white;
+            border: none;
+            margin: 5px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+          }
+          .btn:hover {
+            opacity: 0.85;
+          }
+          .item {
+            background: rgba(255, 255, 255, 0.5);
+            padding: 10px 12px;
+            border-radius: 10px;
+            margin-top: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.2s;
+          }
+          .item.done {
+            text-decoration: line-through;
+            opacity: 0.6;
+          }
+          .modal-bg {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+          }
+          .modal {
+            background: #f8bbd0;
+            padding: 20px;
+            width: 320px;
+            border-radius: 15px;
+            animation: popIn 0.3s;
+          }
+          @keyframes popIn {
+            from {
+              transform: scale(0.8);
+              opacity: 0;
+            }
+            to {
+              transform: scale(1);
+              opacity: 1;
+            }
+          }
+          input,
+          select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            border: none;
+            margin-top: 10px;
+            font-size: 16px;
+          }
+          #calendarContainer {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+          }
+          .day {
+            padding: 10px;
+            border: 1px solid rgba(236, 64, 122, 0.5);
+            text-align: center;
+            border-radius: 5px;
+            cursor: pointer;
+            position: relative;
+            transition: 0.2s;
+          }
+          .day.has-item {
+            background: var(--accent);
+            color: white;
+          }
+          .day:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+          }
+          .day::after {
+            content: "●";
+            color: white;
+            position: absolute;
+            bottom: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+          }
+          #themePreview {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+            vertical-align: middle;
+            border: 2px solid #333;
+          }
+          canvas {
+            background: white;
+            border-radius: 12px;
+            padding: 10px;
+            margin-top: 20px;
+          }
+          @media (max-width: 600px) {
+            .grid {
+              grid-template-columns: 1fr;
+            }
+          }
+          #headerTop {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+          }
+        </style>
+      </head>
+      <body>
+        <nav id="mainNav">
+          <button onclick="showPage('dashboard')">
+            <i class="fas fa-home"></i> داشبورد
+          </button>
+          <button onclick="showPage('habits')">
+            <i class="fas fa-list"></i> عادت‌ها
+          </button>
+          <button onclick="showPage('tasks')">
+            <i class="fas fa-tasks"></i> کارها
+          </button>
+          <button onclick="showPage('challenges')">
+            <i class="fas fa-bolt"></i> چالش‌ها
+          </button>
+          <button onclick="showPage('goals')">
+            <i class="fas fa-bullseye"></i> اهداف
+          </button>
+          <button onclick="showPage('meditation')">
+            <i class="fas fa-spa"></i> مدیتیشن
+          </button>
+          <select id="themeSelector" onchange="changeTheme()">
+            <option value="rose">رز</option>
+            <option value="green">سبز روشن</option>
+            <option value="purple">یاسی</option>
+            <option value="peach">هلویی</option>
+            <option value="lavender">اسطوخودوس</option>
+            <option value="mint">نعنایی</option>
+            <option value="coral">مرجانی</option>
+            <option value="sunset">نارنجی-صورتی</option>
+            <option value="cream">کرم روشن</option>
+            <option value="silver">نقره ای</option>
+            <option value="blue">ابی روشن</option>
+            <option value="navy">ابی کاربنی</option>
+            <option value="teal">ابی فیروزه ای</option>
+          </select>
+          <span id="themePreview"></span>
+        </nav>
+
+        <!-- داشبورد -->
+        <div id="dashboard" class="page active">
+          <div class="card">
+            🔗 <a href="#" onclick="showPage('about')">درباره ما</a>
+          </div>
+          <div class="card">
+            🔗 <a href="#" onclick="showPage('contact us')">پشتیبانی</a>
+          </div>
+          <div id="headerTop">
+            <div>
+              <h2>داشبورد</h2>
+              <div id="clock">00:00:00 AM</div>
+              <div id="currentDate">تاریخ: 1402/01/01</div>
+            </div>
+          </div>
+          <div class="card" id="quoteCard">
+            ✨ جمله انگیزشی روز: <span id="dailyQuote"></span>
+          </div>
+          <div class="grid">
+            <div class="card">
+              تعداد عادت‌ها: <span id="habitCount">0</span>
+            </div>
+            <div class="card">کارها: <span id="taskCount">0</span></div>
+            <div class="card">چالش‌ها: <span id="challengeCount">0</span></div>
+            <div class="card">اهداف: <span id="goalCount">0</span></div>
+          </div>
+          <canvas id="progressChart"></canvas>
+          <canvas id="dailyChart"></canvas>
+        </div>
+        <!-- عادت‌ها -->
+        <div id="habits" class="page">
+          <h2>عادت‌ها</h2>
+          <button class="btn" onclick="openModal('habit')">
+            ➕ افزودن عادت
+          </button>
+          <div id="habitList"></div>
+        </div>
+
+        <!-- کارها -->
+        <div id="tasks" class="page">
+          <h2>کارها</h2>
+          <button class="btn" onclick="openModal('task')">➕ افزودن کار</button>
+          <div id="taskList"></div>
+          <div style="margin-top: 10px">
+            <button class="btn" onclick="startTaskTimer()">
+              شروع تایمر کار
+            </button>
+            <button
+              class="btn"
+              style="background: #888"
+              onclick="pauseTaskTimer()"
+            >
+              توقف
+            </button>
+            <button
+              class="btn"
+              style="background: #555"
+              onclick="resumeTaskTimer()"
+            >
+              ادامه
+            </button>
+            <button
+              class="btn"
+              style="background: #aaa"
+              onclick="resetTaskTimer()"
+            >
+              ریست
+            </button>
+            <div id="taskTimerDisplay">00:00:00</div>
+          </div>
+        </div>
+
+        <!-- چالش‌ها -->
+        <div id="challenges" class="page">
+          <h2>چالش‌ها</h2>
+          <button class="btn" onclick="openModal('challenge')">
+            ➕ افزودن چالش
+          </button>
+          <div id="challengeList"></div>
+        </div>
+
+        <!-- اهداف -->
+        <div id="goals" class="page">
+          <h2>اهداف</h2>
+          <button class="btn" onclick="openModal('goal')">➕ افزودن هدف</button>
+          <div id="goalList"></div>
+        </div>
+
+        <!-- مدیتیشن -->
+        <div id="meditation" class="page">
+          <h2>مدیتیشن</h2>
+          <label
+            >مدت زمان (دقیقه):
+            <input type="number" id="medTime" placeholder="مثلاً 10" />
+          </label>
+          <label
+            >صدای طبیعت:
+            <select id="medSound">
+              <option value="forest">جنگل</option>
+              <option value="rain">باران</option>
+              <option value="sea">دریا</option>
+              <option value="autumn">پاییز</option>
+            </select>
+          </label>
+          <div style="margin-top: 10px">
+            <button class="btn" onclick="startMeditation()">شروع</button>
+            <button
+              class="btn"
+              style="background: #888"
+              onclick="pauseMeditation()"
+            >
+              توقف
+            </button>
+            <button
+              class="btn"
+              style="background: #555"
+              onclick="resumeMeditation()"
+            >
+              ادامه
+            </button>
+            <button
+              class="btn"
+              style="background: #aaa"
+              onclick="resetMeditation()"
+            >
+              ریست
+            </button>
+            <div id="medTimerDisplay">00:00:00</div>
+            <div id="medStatus"></div>
+          </div>
+        </div>
+
+        <!-- درباره ما -->
+        <div id="about" class="page">
+          <h2>🌙درباره ما</h2>
+          <p>
+            سایت نُوا یک داشبورد کامل مدیریت روزانه است که به شما کمک می‌کند
+            عادت‌ها، کارها، چالش‌ها و اهداف خود را مدیریت کنید، پیشرفت خود را
+            مشاهده کنید و زندگی روزمره را بهتر برنامه‌ریزی کنید. تم‌های رنگی
+            پاستلی باعث زیبایی و آرامش بیشتر می‌شوند🖋️💭
+          </p>
+        </div>
+        <!-- پشتیبانی -->
+        <div id="contact us" class="page">
+          <h2>ارتباط با ما</h2>
+          <p>
+            ایمیل 📧
+            <a href="mailto:esmaeilzibaei55@gmail.com">
+              esmaeilzibaei55@gmail.com
+            </a>
+          </p>
+
+          <p>
+            تلفن 📞
+            <a href="tel:09371237083"> 09371237083 </a>
+          </p>
+
+          <p>
+            تلگرام ✈️
+            <a href="https://t.me/LunarSpecter9"> @LunarSpecter9 </a>
+          </p>
+        </div>
+
+        <!-- مودال -->
+        <div id="modalBg" class="modal-bg">
+          <div class="modal">
+            <h3 id="modalTitle"></h3>
+            <input id="modalInput" placeholder="متن را وارد کنید..." />
+            <button class="btn" onclick="saveItem()">ذخیره</button>
+            <button class="btn" style="background: #555" onclick="closeModal()">
+              بستن
+            </button>
+          </div>
+        </div>
+
+        <script>
+          // ===== تم‌ها =====
+
+          const themes = {
+            rose: {
+              bg: "#fce4ec",
+              text: "#333",
+              card: "rgba(255,255,255,0.7)",
+              btn: "#f06292",
+              accent: "#ec407a",
+            },
+            green: {
+              bg: "#e8f5e9",
+              text: "#333",
+              card: "rgba(255,255,255,0.7)",
+              btn: "#81c784",
+              accent: "#4caf50",
+            },
+            purple: {
+              bg: "#f3e5f5",
+              text: "#333",
+              card: "rgba(255,255,255,0.7)",
+              btn: "#ba68c8",
+              accent: "#9c27b0",
+            },
+            peach: {
+              bg: "#fff3e0",
+              text: "#333",
+              card: "rgba(255,255,255,0.7)",
+              btn: "#ffb74d",
+              accent: "#ffa726",
+            },
+            lavender: {
+              bg: "#f3e5f5",
+              text: "#333",
+              card: "rgba(255,255,255,0.7)",
+              btn: "#ce93d8",
+              accent: "#ab47bc",
+            },
+            mint: {
+              bg: "#e0f7f1",
+              text: "#333",
+              card: "rgba(255,255,255,0.7)",
+              btn: "#80cbc4",
+              accent: "#26a69a",
+            },
+            coral: {
+              bg: "#ffe0b2",
+              text: "#333",
+              card: "rgba(255,255,255,0.7)",
+              btn: "#ff8a65",
+              accent: "#ff7043",
+            },
+            sunset: {
+              bg: "#ffe5d9",
+              text: "#333",
+              card: "rgba(255,255,255,0.7)",
+              btn: "#ffab91",
+              accent: "#ff8a65",
+            },
+            cream: {
+              bg: "#fffde7",
+              text: "#333",
+              card: "rgba(255,255,255,0.7)",
+              btn: "#fff176",
+              accent: "#fdd835",
+            },
+            silver: {
+              bg: "#f5f5f5",
+              text: "#424242",
+              card: "rgba(225,225,225,0.7)",
+              btn: "#b0bec5",
+              accent: "#90a4ae",
+            },
+            blue: {
+              bg: "#e3f2fd",
+              text: "#0d47a1",
+              card: "rgba(225,225,225,0.7)",
+              btn: "#2196f3",
+              accent: "#0d47a1",
+            },
+            navy: {
+              bg: "#e0e7ff",
+              text: "#1e3a8a",
+              card: "rgba(225,225,225,0.7)",
+              btn: "#4f46e5",
+              accent: "#1e40af",
+            },
+            teal: {
+              bg: "#e0f7fa",
+              text: "#006064",
+              card: "rgba(225,225,225,0.7)",
+              btn: "#26c6da",
+              accent: "#00838f",
+            },
+          };
+          function changeTheme() {
+            const t = document.getElementById("themeSelector").value;
+            const theme = themes[t];
+            document.documentElement.style.setProperty("--bg", theme.bg);
+            document.documentElement.style.setProperty("--text", theme.text);
+            document.documentElement.style.setProperty("--card", theme.card);
+            document.documentElement.style.setProperty("--btn", theme.btn);
+            document.documentElement.style.setProperty(
+              "--accent",
+              theme.accent
+            );
+            document.getElementById("themePreview").style.backgroundColor =
+              theme.btn;
+          }
+          changeTheme();
+
+          // ===== ساعت و تاریخ =====
+          function updateClock() {
+            let now = new Date();
+            let h = now.getHours(),
+              m = now.getMinutes(),
+              s = now.getSeconds();
+            let ampm = h >= 12 ? "PM" : "AM";
+            let hour = h % 12;
+            hour = hour ? hour : 12;
+            document.getElementById("clock").innerText = `${hour
+              .toString()
+              .padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s
+              .toString()
+              .padStart(2, "0")} ${ampm}`;
+            let persianDate = new Intl.DateTimeFormat("fa-IR", {
+              year: "numeric",
+              month: "numeric",
+              day: "numeric",
+              weekday: "long",
+            }).format(now);
+            document.getElementById(
+              "currentDate"
+            ).innerText = `تاریخ: ${persianDate}`;
+          }
+          setInterval(updateClock, 1000);
+
+          // ===== صفحات و لیست‌ها =====
+          let currentType = null;
+          function showPage(page) {
+            document
+              .querySelectorAll(".page")
+              .forEach((p) => p.classList.remove("active"));
+            document.getElementById(page).classList.add("active");
+            updateCounts();
+            updateChart();
+            updateDailyChart();
+          }
+          function openModal(type) {
+            currentType = type;
+            document.getElementById("modalTitle").innerText = "افزودن " + type;
+            document.getElementById("modalBg").style.display = "flex";
+          }
+          function closeModal() {
+            document.getElementById("modalBg").style.display = "none";
+          }
+          function saveItem() {
+            let text = document.getElementById("modalInput").value;
+            if (!text.trim()) return;
+            let items = JSON.parse(localStorage.getItem(currentType)) || [];
+            items.push({
+              text: text,
+              done: false,
+              date: new Date().toDateString(),
+            });
+            localStorage.setItem(currentType, JSON.stringify(items));
+            document.getElementById("modalInput").value = "";
+            closeModal();
+            loadAll();
+          }
+          function loadList(type) {
+            let container = document.getElementById(type + "List");
+            let items = JSON.parse(localStorage.getItem(type)) || [];
+            container.innerHTML = "";
+            items.forEach((item, i) => {
+              container.innerHTML += `<div class="item ${
+                item.done ? "done" : ""
+              }" onclick="toggleDone('${type}',${i})">${
+                item.text
+              }<button onclick="deleteItem('${type}',${i});event.stopPropagation();" style="background:none;border:none;color:#ff7878">✖</button></div>`;
+            });
+          }
+          function toggleDone(type, index) {
+            let items = JSON.parse(localStorage.getItem(type)) || [];
+            items[index].done = !items[index].done;
+            localStorage.setItem(type, JSON.stringify(items));
+            loadAll();
+          }
+          function deleteItem(type, index) {
+            let items = JSON.parse(localStorage.getItem(type)) || [];
+            items.splice(index, 1);
+            localStorage.setItem(type, JSON.stringify(items));
+            loadAll();
+          }
+          function updateCounts() {
+            ["habit", "task", "challenge", "goal"].forEach((type) => {
+              document.getElementById(type + "Count").innerText = (
+                JSON.parse(localStorage.getItem(type)) || []
+              ).length;
+            });
+          }
+
+          // ===== نمودار =====
+          let chart = null,
+            dailyChart = null;
+          function updateChart() {
+            const ctx = document
+              .getElementById("progressChart")
+              .getContext("2d");
+            let habitDone = (
+              JSON.parse(localStorage.getItem("habit")) || []
+            ).filter((i) => i.done).length;
+            let taskDone = (
+              JSON.parse(localStorage.getItem("task")) || []
+            ).filter((i) => i.done).length;
+            let challengeDone = (
+              JSON.parse(localStorage.getItem("challenge")) || []
+            ).filter((i) => i.done).length;
+            let goalDone = (
+              JSON.parse(localStorage.getItem("goal")) || []
+            ).filter((i) => i.done).length;
+            let data = [habitDone, taskDone, challengeDone, goalDone];
+            if (chart) chart.destroy();
+            chart = new Chart(ctx, {
+              type: "bar",
+              data: {
+                labels: ["عادت‌ها", "کارها", "چالش‌ها", "اهداف"],
+                datasets: [
+                  {
+                    label: "تعداد انجام شده",
+                    data: data,
+                    backgroundColor: "rgba(236,64,122,0.7)",
+                  },
+                ],
+              },
+              options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } },
+              },
+            });
+          }
+          function updateDailyChart() {
+            const ctx = document.getElementById("dailyChart").getContext("2d");
+            let items = ["habit", "task", "challenge", "goal"].map((type) => {
+              let arr = JSON.parse(localStorage.getItem(type)) || [];
+              return arr.filter(
+                (i) =>
+                  i.done &&
+                  new Date(i.date).toDateString() === new Date().toDateString()
+              ).length;
+            });
+            if (dailyChart) dailyChart.destroy();
+            dailyChart = new Chart(ctx, {
+              type: "line",
+              data: {
+                labels: ["عادت", "کار", "چالش", "هدف"],
+                datasets: [
+                  {
+                    label: "پیشرفت امروز",
+                    data: items,
+                    borderColor: "rgba(236,64,122,0.8)",
+                    backgroundColor: "rgba(236,64,122,0.3)",
+                    fill: true,
+                  },
+                ],
+              },
+            });
+          }
+          // ===== تایمر کارها =====
+          let taskTimer = null,
+            taskTimeRemaining = 0;
+          function startTaskTimer() {
+            let t = prompt("مدت زمان تایمر کارها (دقیقه):");
+            let mins = parseInt(t) || 0;
+            if (mins <= 0) return;
+            taskTimeRemaining = mins * 60;
+            taskTimer = setInterval(() => {
+              taskTimeRemaining--;
+              document.getElementById("taskTimerDisplay").innerText =
+                formatTime(taskTimeRemaining);
+              if (taskTimeRemaining <= 0) {
+                clearInterval(taskTimer);
+                alert("تایمر کارها به پایان رسید!");
+              }
+            }, 1000);
+          }
+          function pauseTaskTimer() {
+            if (taskTimer) {
+              clearInterval(taskTimer);
+              taskTimer = null;
+            }
+          }
+          function resumeTaskTimer() {
+            if (taskTimeRemaining > 0 && !taskTimer) {
+              taskTimer = setInterval(() => {
+                taskTimeRemaining--;
+                document.getElementById("taskTimerDisplay").innerText =
+                  formatTime(taskTimeRemaining);
+                if (taskTimeRemaining <= 0) {
+                  clearInterval(taskTimer);
+                  alert("تایمر کارها به پایان رسید!");
+                }
+              }, 1000);
+            }
+          }
+          function resetTaskTimer() {
+            pauseTaskTimer();
+            taskTimeRemaining = 0;
+            document.getElementById("taskTimerDisplay").innerText = "00:00:00";
+          }
+
+          // ===== مدیتیشن =====
+          let medTimer = null,
+            medTimeRemaining = 0,
+            medAudio = null,
+            medInterval = null;
+          const medSounds = {
+            rain: "https://sedatoseda.com/wp-content/uploads/rain1.mp3",
+            forest:
+              "https://sedatoseda.com/wp-content/uploads/jungle_choco-01-5864-1.mp3",
+            sea: "https://sedatoseda.com/wp-content/uploads/small-waves-onto-the-sand.mp3",
+            autumn:
+              "https://sedatoseda.com/wp-content/uploads/oak-grove-dry-leaves-autumn-9520.mp3",
+          };
+          function formatTime(sec) {
+            let h = Math.floor(sec / 3600),
+              m = Math.floor((sec % 3600) / 60),
+              s = sec % 60;
+            return `${h.toString().padStart(2, "0")}:${m
+              .toString()
+              .padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+          }
+          function startMeditation() {
+            let mins = parseInt(document.getElementById("medTime").value) || 0;
+            if (mins <= 0) return;
+            medTimeRemaining = mins * 60;
+            if (medAudio) {
+              medAudio.pause();
+              medAudio = null;
+            }
+            let selectedSound = document.getElementById("medSound").value;
+            medAudio = new Audio(medSounds[selectedSound]);
+            medAudio.loop = true;
+            medAudio.play();
+            document.getElementById("medStatus").innerText = "در حال مدیتیشن";
+            medInterval = setInterval(() => {
+              medTimeRemaining--;
+              document.getElementById("medTimerDisplay").innerText =
+                formatTime(medTimeRemaining);
+              if (medTimeRemaining <= 0) {
+                clearInterval(medInterval);
+                medAudio.pause();
+                alert("مدیتیشن شما به پایان رسید!");
+                document.getElementById("medStatus").innerText = "تمام شد";
+              }
+            }, 1000);
+          }
+          function pauseMeditation() {
+            if (medInterval) {
+              clearInterval(medInterval);
+              medInterval = null;
+              document.getElementById("medStatus").innerText = "توقف";
+              if (medAudio) medAudio.pause();
+            }
+          }
+          function fadeIn(
+            audio,
+            targetVolume = 0.5,
+            step = 0.01,
+            interval = 50
+          ) {
+            audio.volume = 0;
+            audio.play();
+            let fadeInterval = setInterval(() => {
+              if (audio.volume + step >= targetVolume) {
+                audio.volume = targetVolume;
+                clearInterval(fadeInterval);
+              } else audio.volume += step;
+            }, interval);
+          }
+          function resumeMeditation() {
+            if (!medInterval && medTimeRemaining > 0) {
+              if (medAudio) medAudio.play();
+              medInterval = setInterval(() => {
+                medTimeRemaining--;
+                document.getElementById("medTimerDisplay").innerText =
+                  formatTime(medTimeRemaining);
+                if (medTimeRemaining <= 0) {
+                  clearInterval(medInterval);
+                  medAudio.pause();
+                  alert("مدیتیشن شما به پایان رسید!");
+                  document.getElementById("medStatus").innerText = "تمام شد";
+                }
+              }, 1000);
+              document.getElementById("medStatus").innerText = "در حال مدیتیشن";
+            }
+          }
+          function resetMeditation() {
+            pauseMeditation();
+            medTimeRemaining = 0;
+            document.getElementById("medTimerDisplay").innerText = "00:00:00";
+            document.getElementById("medStatus").innerText = "";
+          }
+          // ===== جمله روز =====
+          const quotes = [
+            "موفقیت از آنِ کسی است که ادامه می‌دهد.",
+            "هر روز یک فرصت جدید است.",
+            "بهترین زمان برای شروع، همین حالاست.",
+            "تو از چیزی که فکر می‌کنی قوی‌تری.",
+            "قدم‌های کوچک، تغییرات بزرگ می‌سازند.",
+          ];
+          function loadQuote() {
+            document.getElementById("dailyQuote").innerText =
+              quotes[Math.floor(Math.random() * quotes.length)];
+          }
+
+          // ===== لود کامل =====
+          function loadAll() {
+            ["habit", "task", "challenge", "goal"].forEach(loadList);
+            updateCounts();
+            updateChart();
+            updateDailyChart();
+            loadQuote();
+          }
+          loadAll();
+        </script>
+      </body>
+    </html>
+  </body>
+</html>
